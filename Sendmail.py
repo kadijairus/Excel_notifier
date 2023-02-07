@@ -1,7 +1,7 @@
 # Send message via gmail
+# Input: gmail account, user and password in config.py
 # 
-# 
-# 05.02.2023
+# 07.02.2023
 # v1
 # Kadi Jairus
 
@@ -14,10 +14,10 @@ smtp_server = "smtp.gmail.com"
 sender_email = config.user
 apppassword = config.password
 receiver_email = "kadijairus@gmail.com"
-muutuja = 5
+variable = 5
 
 message = f"""\
-Subject: Ajakava tabelis {muutuja} muudatust
+Subject: Ajakava tabelis {variable} muudatust
 
 This message is sent from Python.
 
