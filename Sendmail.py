@@ -17,21 +17,56 @@ import config
 # Asukohad testkaustas
 dir_old = r'D:\Users\loom\Desktop\Pisi\T88\Python jms\Sendmail_arhiiv\2023 Ajakava.xlsx'
 dir_new = r'D:\Users\loom\Desktop\Pisi\T88\Python jms\2023 Ajakava.xlsx'
+allsheetnames = ["P","T"]
+names = pd.read_excel(dir_old,sheet_name='Töötajad',header=2,usecols=["Töötajad"])
+print(names)
+names.drop(names.index[30:102], inplace=True)
+names.drop(names.index[120:152], inplace=True)
+#names = names.drop(names.loc[30:102].index, inplace=True)
+#names = names.drop(index[(names[30:102]) & (names[120:152])].index)
+names = names.dropna()
+print(names)
+names = tuple(names['Töötajad'])
+print(names)
+
+#teesiinpaus = 1/0
 
 def sheetcomparer(dir_old,dir_new,sheetname):
     df_old = pd.read_excel(dir_old,sheet_name=sheetname,header=1,usecols=["Nimi","Algus","Lõpp"])
     df_new = pd.read_excel(dir_new,sheet_name=sheetname,header=1,usecols=["Nimi","Algus","Lõpp"])
-    df = df_new.compare(df_old, align_axis=0, keep_shape = False).rename(index={'self': 'uus', 'other': 'vana'},level=-1)
+    df = df_new.compare(df_old, align_axis=0, keep_shape = False).rename(index={'self': 'uus', 'other': 'enne muutmist'},level=-1)
     df["Leht"] = sheetname
-#    df = df[['Nimi', 'self'],['Algus', 'self'],['Lõpp', 'self'],['Leht', '']]
-    df.replace({'NaN': '', 'NaT': ''})
-    print(df)
-
-sheetcomparer(dir_old,dir_new,"P")
+    df.fillna('-')
+    return(df)
 
 
-teesiinpaus = 1/0
-shutil.copy(dir_new,dir_old)
+try:
+    df_appended=[]
+    if len(allsheetnames) > 0:
+        for asheetname in allsheetnames:
+            print(asheetname)
+            df_sheet = sheetcomparer(dir_old,dir_new,asheetname)
+            df_appended.append(df_sheet)
+            print(df_appended)
+        df = pd.concat(df_appended)
+        df = df.fillna('-')
+        print(df)
+    else:
+        print("No sheetnames!")
+except Exception as e:
+    print("Sheetcomparer error!")
+    print(str(e))
+
+nimedefilter = (df['Nimi'].isin(names))
+df = df.loc[nimedefilter]
+print("FILTREERITUD")
+#Kuupäevalt kellaaeg maha, sidekriips vahele, "Leht" maha
+print(df)
+
+#teesiinpaus = 1/0
+
+#shutil.copy(dir_new,dir_old)
+
 # https://mljar.com/blog/python-send-email/ 2023-02-07
 def mailsender(receiver_email, subject, message):
     try:
@@ -48,8 +83,12 @@ def mailsender(receiver_email, subject, message):
         smtp_server = "smtp.gmail.com"
         
         message = f"""\
-Subject: {subject}
-        
+Subject: Ajakavas {subject} muudatust
+
+Tere!
+
+Ajakavas on sellised muudatused:
+
 {message}
         
 Tervitustega
@@ -72,8 +111,8 @@ Meilirobot
         print(str(e))
     return False
 
-message1 = "Põhitekst asub siin"
-message1 = message1.encode('utf-8').decode('utf-8')
+#message1 = "Põhitekst asub siin"
+#df = df.encode('utf-8').decode('utf-8')
 #print(message1)
 #paus = 1/0
-mailsender("kadijairus@gmail.com","Teavitus",message1)
+mailsender("kadijairus@gmail.com", len(df),df)
