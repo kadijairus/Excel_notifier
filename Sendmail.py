@@ -1,14 +1,37 @@
-# Send message via gmail
-# Input: gmail account, user and password in config.py
-# 
+# Set up sceduled task, check Excel and send email if changes are detected
+# Input: new and archive version of the same file; gmail account; user and password in config.py; Task Scheduler
+# Output: email
 # 07.02.2023
 # v1
 # Kadi Jairus
 
+import pandas as pd
+import shutil
 import smtplib, ssl, os
+#config.py in the same folder: user = "***" password = "b***"
 import config
 
 
+#dir_old = r'C:\Intel\KadiJairus\Arhiiv\2023 Ajakava.xlsx'
+#dir_new = r'\\srvlaste\Yhendlabor\GE_Geneetikakeskus\Puhkused_koolitused\2023 Ajakava.xlsx'
+# Asukohad testkaustas
+dir_old = r'D:\Users\loom\Desktop\Pisi\T88\Python jms\Sendmail_arhiiv\2023 Ajakava.xlsx'
+dir_new = r'D:\Users\loom\Desktop\Pisi\T88\Python jms\2023 Ajakava.xlsx'
+
+def sheetcomparer(dir_old,dir_new,sheetname):
+    df_old = pd.read_excel(dir_old,sheet_name=sheetname,header=1,usecols=["Nimi","Algus","Lõpp"])
+    df_new = pd.read_excel(dir_new,sheet_name=sheetname,header=1,usecols=["Nimi","Algus","Lõpp"])
+    df = df_new.compare(df_old, align_axis=0, keep_shape = False).rename(index={'self': 'uus', 'other': 'vana'},level=-1)
+    df["Leht"] = sheetname
+#    df = df[['Nimi', 'self'],['Algus', 'self'],['Lõpp', 'self'],['Leht', '']]
+    df.replace({'NaN': '', 'NaT': ''})
+    print(df)
+
+sheetcomparer(dir_old,dir_new,"P")
+
+
+teesiinpaus = 1/0
+shutil.copy(dir_new,dir_old)
 # https://mljar.com/blog/python-send-email/ 2023-02-07
 def mailsender(receiver_email, subject, message):
     try:
