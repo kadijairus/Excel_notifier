@@ -13,23 +13,46 @@ import config
 
 
 #dir_old = r'C:\Intel\KadiJairus\Arhiiv\2023 Ajakava.xlsx'
-#dir_new = r'\\srvlaste\Yhendlabor\GE_Geneetikakeskus\Puhkused_koolitused\2023 Ajakava.xlsx'
+#dir_original = = r'\\srvlaste\Yhendlabor\GE_Geneetikakeskus\Puhkused_koolitused\2023 Ajakava.xlsx'
+#dir_old = r'C:\Intel\KadiJairus\Arhiiv\2023 Ajakava uus.xlsx'
 # Asukohad testkaustas
 dir_old = r'D:\Users\loom\Desktop\Pisi\T88\Python jms\Sendmail_arhiiv\2023 Ajakava.xlsx'
-dir_new = r'D:\Users\loom\Desktop\Pisi\T88\Python jms\2023 Ajakava.xlsx'
+dir_original = r'D:\Users\loom\Desktop\Pisi\T88\Python jms\2023 Ajakava.xlsx'
+dir_new = r'D:\Users\loom\Desktop\Pisi\T88\Python jms\Sendmail_arhiiv\2023 Ajakava uus.xlsx'
+
+try:
+    shutil.copy(dir_original,dir_new)
+except:
+    print("Jätkan")
+
+
+
+
+
+
 allsheetnames = ["P","T"]
-names = pd.read_excel(dir_old,sheet_name='Töötajad',header=2,usecols=["Töötajad"])
+
+names = pd.read_excel(dir_new,sheet_name='Töötajad',header=2,usecols=[4,18])
+names.columns = ['Name', 'Dpt']
+names.dropna()
+names = names[names['Dpt'].str.contains("kliiniline geneetika")==True]
 print(names)
-names.drop(names.index[30:102], inplace=True)
-names.drop(names.index[120:152], inplace=True)
+paus =1/0
+
+names.drop(names.index[29:101], inplace=True)
+pd.set_option('display.max_rows', None)
+names.drop(names.index[118:142], inplace=True)
+print(names)
+names.drop(names.index[143:144], inplace=True)
 #names = names.drop(names.loc[30:102].index, inplace=True)
 #names = names.drop(index[(names[30:102]) & (names[120:152])].index)
-names = names.dropna()
+names = names['Töötajad'].unique()
 print(names)
-names = tuple(names['Töötajad'])
+names = list(names["Töötajad"])
 print(names)
 
-#teesiinpaus = 1/0
+
+teesiinpaus = 1/0
 
 def sheetcomparer(dir_old,dir_new,sheetname):
     df_old = pd.read_excel(dir_old,sheet_name=sheetname,header=1,usecols=["Nimi","Algus","Lõpp"])
@@ -116,3 +139,8 @@ Meilirobot
 #print(message1)
 #paus = 1/0
 mailsender("kadijairus@gmail.com", len(df),df)
+
+os.remove(dir_old)
+os.rename(dir_new,dir_old)
+
+print("OK!")
