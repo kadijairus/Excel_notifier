@@ -1,8 +1,8 @@
 # Set up sceduled task, check Excel and send email if changes are detected
 # Input: new and archive version of the same file; gmail account; user and password in config.py; Task Scheduler
 # Output: email
-# 07.02.2023
-# v1
+# 13.02.2023
+# v2
 # Kadi Jairus
 
 import pandas as pd
@@ -26,33 +26,16 @@ except:
     print("Jätkan")
 
 
-
-
-
-
-allsheetnames = ["P","T"]
+allsheetnames = ["P","T","H","K","E","M"]
 
 names = pd.read_excel(dir_new,sheet_name='Töötajad',header=2,usecols=[4,18])
-names.columns = ['Name', 'Dpt']
+names.columns = ['Nimi', 'Dpt']
 names.dropna()
 names = names[names['Dpt'].str.contains("kliiniline geneetika")==True]
-print(names)
-paus =1/0
-
-names.drop(names.index[29:101], inplace=True)
-pd.set_option('display.max_rows', None)
-names.drop(names.index[118:142], inplace=True)
-print(names)
-names.drop(names.index[143:144], inplace=True)
-#names = names.drop(names.loc[30:102].index, inplace=True)
-#names = names.drop(index[(names[30:102]) & (names[120:152])].index)
-names = names['Töötajad'].unique()
-print(names)
-names = list(names["Töötajad"])
+names = names['Nimi']
+#names = list(names["Name"])
 print(names)
 
-
-teesiinpaus = 1/0
 
 def sheetcomparer(dir_old,dir_new,sheetname):
     df_old = pd.read_excel(dir_old,sheet_name=sheetname,header=1,usecols=["Nimi","Algus","Lõpp"])
@@ -62,7 +45,7 @@ def sheetcomparer(dir_old,dir_new,sheetname):
     df.fillna('-')
     return(df)
 
-
+df = []
 try:
     df_appended=[]
     if len(allsheetnames) > 0:
@@ -72,7 +55,17 @@ try:
             df_appended.append(df_sheet)
             print(df_appended)
         df = pd.concat(df_appended)
-        df = df.fillna('-')
+        df['Algus'] = pd.to_datetime(df['Algus'])
+        df['Algus'] = df['Algus'].dt.strftime('%d.%m.%Y')
+        df['Lõpp'] = pd.to_datetime(df['Lõpp'])
+        df['Lõpp'] = df['Lõpp'].dt.strftime('%d.%m.%Y')
+        print('Enne filtreerimist')
+        print(df)
+        #df['Name'] =df['Nimi']
+        nimedefilter = (df['Nimi'].isin(names))
+        df = df.loc[nimedefilter]
+#        df = df.to_string(index=False)
+        print("FILTREERITUD")
         print(df)
     else:
         print("No sheetnames!")
@@ -80,11 +73,13 @@ except Exception as e:
     print("Sheetcomparer error!")
     print(str(e))
 
-nimedefilter = (df['Nimi'].isin(names))
-df = df.loc[nimedefilter]
-print("FILTREERITUD")
-#Kuupäevalt kellaaeg maha, sidekriips vahele, "Leht" maha
-print(df)
+
+if len(df) > 0:
+    subject = "on tehtud muudatusi"
+else:
+    subject = "ei ole ühtegi muudatust"
+    df = ''
+#print(df)
 
 #teesiinpaus = 1/0
 
@@ -106,11 +101,11 @@ def mailsender(receiver_email, subject, message):
         smtp_server = "smtp.gmail.com"
         
         message = f"""\
-Subject: Ajakavas {subject} muudatust
+Subject: Ajakavas {subject}
 
 Tere!
 
-Ajakavas on sellised muudatused:
+Ajakavas {subject}.
 
 {message}
         
@@ -138,7 +133,7 @@ Meilirobot
 #df = df.encode('utf-8').decode('utf-8')
 #print(message1)
 #paus = 1/0
-mailsender("kadijairus@gmail.com", len(df),df)
+mailsender("kadijairus@gmail.com", subject,df)
 
 os.remove(dir_old)
 os.rename(dir_new,dir_old)
