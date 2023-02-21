@@ -20,11 +20,11 @@ def outlookmailsender(receiver_email, subject, message,lastchanged):
     outlook = win32.Dispatch('outlook.application')
     mail = outlook.CreateItem(0)
     mail.To = receiver_email
-    mail.Subject = subject
+    mail.Subject = 'Ajakavas ' + subject
     mail.Body = f"""\
 Tere!
 
-Ajakavas {subject}.
+Ajakava tabelis {subject}.
 
 {message}
 
@@ -62,7 +62,6 @@ Subject: Ajakavas {subject}
 Tere!
 
 Ajakavas {subject}.
-
 {message}
         
 Tervitustega
@@ -126,7 +125,9 @@ print(names)
 def sheetcomparer(dir_old,dir_new,sheetname):
     df_old = pd.read_excel(dir_old,sheet_name=sheetname,header=1,usecols=["Nimi","Algus","Lõpp"])
     df_new = pd.read_excel(dir_new,sheet_name=sheetname,header=1,usecols=["Nimi","Algus","Lõpp"])
-    df = df_new.compare(df_old, align_axis=0, keep_shape = False).rename(index={'self': 'uus', 'other': 'enne muutmist'},level=-1)
+#    nimedefilter = (df_new['Nimi'].isin(names))
+#    df_new = df_new.loc[nimedefilter]
+    df = df_new.compare(df_old, align_axis=0, keep_shape = False, keep_equal = True).rename(index={'self': 'lisatud ajad', 'other': 'enne muutmist'},level=-1)
     df["Leht"] = sheetname
     df.fillna('-')
     return(df)
@@ -147,10 +148,13 @@ try:
         df['Lõpp'] = df['Lõpp'].dt.strftime('%d.%m.%Y')
         print('Enne filtreerimist')
         print(df)
-        #df['Name'] =df['Nimi']
+#        df['Name'] =df['Nimi']
+# Filtrit ei õnnestunud ettepoole panna. Näitab ainult kuupäeva muutmisel tühja lahtrit
         nimedefilter = (df['Nimi'].isin(names))
         df = df.loc[nimedefilter]
+        df.fillna('-')
 #        df = df.to_string(index=False)
+        df = df[['Leht','Algus','Lõpp','Nimi']]
         print("FILTREERITUD")
         print(df)
     else:
@@ -158,6 +162,7 @@ try:
 except Exception as e:
     print("Sheetcomparer error!")
     print(str(e))
+    raise SystemExit
 
 #mailsender("kadijairus@gmail.com", "Df tehtud","Df tehtud")
 
@@ -182,7 +187,9 @@ else:
 #print(message1)
 #paus = 1/0
 outlookmailsender("kadi.jairus@kliinikum.ee", subject,df,lastchanged)
-outlookmailsender("kadijairus@gmail.com", subject,df,lastchanged)
+outlookmailsender("triin.tago@kliinikum.ee", subject,df,lastchanged)
+#outlookmailsender("katlin.kraavik@kliinikum.ee", subject,df,lastchanged)
+#outlookmailsender("kadijairus@gmail.com", subject,df,lastchanged)
 #mailsender("kadijairus@gmail.com", 'Teate koopia',df)
 
 os.remove(dir_old)
